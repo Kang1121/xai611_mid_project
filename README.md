@@ -26,7 +26,4 @@ pip install git+https://github.com/ildoonet/pytorch-gradual-warmup-lr.git
 python main.py -dataset bcic_iv_2a -model EEGNetv4 -proportion 0.3 -random_pick
 ```
 
-### Run in batch
-```
-source run_script.sh
-```
+You can specify the dataset, model, proportion of training data, and whether to randomly pick the training data.
