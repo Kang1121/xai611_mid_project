@@ -1,0 +1,11 @@
+.idea
+.DS_Store
+wandb/
+__pycache__/
+data/
+checkpoints/
+results/
+.idea/
+.run/
+*.png
+*.jpg
