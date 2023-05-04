@@ -39,6 +39,10 @@ def main(args):
         os.makedirs(out_path)
     if not os.path.exists(model_path):
         os.makedirs(model_path)
+    if os.path.exists(os.path.join(out_path, 'result_subs.csv')):
+        os.remove(os.path.join(out_path, 'result_subs.csv'))
+    if os.path.exists(os.path.join(out_path, 'result_all.csv')):
+        os.remove(os.path.join(out_path, 'result_all.csv'))
 
     logging.basicConfig(handlers=[logging.StreamHandler(), logging.FileHandler('{}/log.txt'.format(out_path))],
                         level=logging.INFO)
@@ -89,7 +93,7 @@ def main(args):
             optimizer.step()
 
             if not args.test:
-                early_stopping = EarlyStopping(patience=1, verbose=True, path='{}/checkpoint_sub{}.pth'.format(model_path, test_subj), trace_func=logging.info)
+                early_stopping = EarlyStopping(patience=20, verbose=True, path='{}/checkpoint_sub{}.pth'.format(model_path, test_subj), trace_func=logging.info)
 
                 for epoch in range(args.n_epochs):
 
@@ -101,7 +105,7 @@ def main(args):
 
                     logging.info('Epoch: {:03d}, LR: {:.5f}, Train Loss: {:.5f}, Train Acc: {:.5f}, Valid Loss: {:.5f}, Valid Acc: {:.5f}, Time Elapsed: {:.2f}'.format(epoch, optimizer.param_groups[0]['lr'], loss_train, acc_train, loss_valid, acc_valid, time.time() - start_time))
 
-                    if epoch > 1:
+                    if epoch > 120:
                         early_stopping(loss_valid, model)
                     if early_stopping.early_stop:
                         logging.info("Early stopping")
@@ -119,8 +123,6 @@ def main(args):
                 f.write('{}, {}, {}, {}\n'.format(test_subj, cv_index, acc_test, f1_test))
             f.close()
 
-            break
-
     with open(os.path.join(out_path, 'result_subs.csv'), 'r') as f:
         lines = f.readlines()
         acc = []
@@ -136,9 +138,22 @@ def main(args):
     logging.info('Average Acc: {:.5f}, Std: {:.5f}'.format(np.mean(acc), np.std(acc)))
     logging.info('Average F1: {:.5f}, Std: {:.5f}'.format(np.mean(f1), np.std(f1)))
 
-    with open(os.path.join(out_path, 'result_all.csv'), 'a') as f:
-        f.write('acc_mean, acc_std, f1_mean, f1_std\n')
-        f.write('{}, {}, {}, {}\n'.format(np.mean(acc), np.std(acc), np.mean(f1), np.std(f1)))
+    with open(os.path.join(out_path, 'result_all.csv'), 'a+') as f:
+        f.write('subject, acc_mean, acc_std, f1_mean, f1_std\n')
+        for idx in range(args.fold):
+            f.write('{}, {}, {}, {}, {}\n'.format(
+                idx+1,
+                np.mean(acc[idx*args.fold:(idx+1)*args.fold]),
+                np.std(acc[idx*args.fold:(idx+1)*args.fold]),
+                np.mean(f1[idx*args.fold:(idx+1)*args.fold]),
+                np.std(f1[idx*args.fold:(idx+1)*args.fold]))
+            )
+        f.seek(0)
+        acc, f1 = [], []
+        for line in f.readlines()[1:]:
+            acc.append(float(line.split(',')[1]))
+            f1.append(float(line.split(',')[3]))
+        f.write('average, {}, {}, {}, {}\n'.format(np.mean(acc), np.std(acc), np.mean(f1), np.std(f1)))
     f.close()
 
 
