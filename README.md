@@ -10,10 +10,9 @@ git clone git@github.com:Kang1121/xai611_mid_project.git
 ```
 
 ### Dataset
-Download the preprocessed dataset and put it in 'data' folder.
-```
-https://drive.google.com/file/d/10E9swE6tPHYi3G5mFXwUuuwuOBWh6_rI/view?usp=sharing
-```
+Download the [preprocessed dataset](https://drive.google.com/file/d/10E9swE6tPHYi3G5mFXwUuuwuOBWh6_rI/view?usp=sharing
+) and put it in 'data' folder.
+
 
 ### Create the enviroment
 ```
