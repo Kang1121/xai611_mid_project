@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument('-dataset', type=str, default='bcic_iv_2a', help='dataset name')
 parser.add_argument('-model', type=str, default='EEGNetv4', help='model name')
 parser.add_argument('-lr', type=float, default=0.001, help='learning rate')
-parser.add_argument('-batch_size', type=int, default=16, help='batch size')
+parser.add_argument('-batch_size', type=int, default=32, help='batch size')
 parser.add_argument('-fold', type=int, default=8, help='cross validation fold')
 parser.add_argument('-proportion', type=float, default=1, help='eps for DBSCAN')
 parser.add_argument('-n_epochs', type=int, default=300, help='number of epochs')
@@ -49,10 +49,6 @@ def main(args):
 
     for idx, test_subj in enumerate(order):
 
-        model = model_zoo(args.model, args.dataset)
-        model.cuda()
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-
         cv_set = np.array(order[idx+1:] + order[:idx])
         for cv_index, (train_index, valid_index) in enumerate(kf.split(cv_set)):
 
@@ -84,6 +80,10 @@ def main(args):
             valid_loader = DataLoader(TensorDataset(torch.from_numpy(x_valid).float().unsqueeze(1), torch.from_numpy(y_valid).long()), batch_size=args.batch_size, shuffle=False, num_workers=0)
             test_loader = DataLoader(TensorDataset(torch.from_numpy(x_test).float().unsqueeze(1), torch.from_numpy(y_test).long()), batch_size=args.batch_size, shuffle=False)
 
+            model = model_zoo(args.model, args.dataset)
+            model.cuda()
+
+            optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
             scheduler_steplr = StepLR(optimizer, step_size=60, gamma=0.1)
             scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=20,
                                                       after_scheduler=scheduler_steplr)
@@ -140,7 +140,7 @@ def main(args):
 
     with open(os.path.join(out_path, 'result_all.csv'), 'a+') as f:
         f.write('subject, acc_mean, acc_std, f1_mean, f1_std\n')
-        for idx in range(args.fold):
+        for idx in range(9):
             f.write('{}, {}, {}, {}, {}\n'.format(
                 idx+1,
                 np.mean(acc[idx*args.fold:(idx+1)*args.fold]),
